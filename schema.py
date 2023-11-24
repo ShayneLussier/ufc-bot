@@ -1,28 +1,26 @@
+from numpy import save
 from pydantic import BaseModel, conint, field_validator
 from enum import Enum
 from typing import Optional
 import json
+from ufc_functions import save_data
 
 
 # ------------------------- SCHEMA -------------------------- #
 
-class FighterStyleEnum(Enum):
-    MMA = 'mma'
-    FREESTYLE = 'freestyle'
-    STRIKER = 'striker'
-    MUAY_THAI = 'muay-thai'
-    JIU_JITSU = ('jiu-jitsu', 'brazilian jiu-jitsu')
-    KICKBOXER = 'kickboxer'
-    GRAPPLING = 'grappler'
-    BOXING = 'boxer'
-    BOXER = 'boxer'
-    WRESTLER = ('wrestler', 'wrestling')
-    KARATE = 'karate'
-    JUDO = 'judo'
-    SAMBO = 'sambo'
-    BRAWLER = 'brawler'
-    KUNG_FU = ('kung fu, kung-fu')
-    TAEKWONDO = 'taekwondo'
+class WeightClassEnum(Enum):
+    FLYWEIGHT= 'flyweight'
+    BANTAMWEIGHT= 'bantamweight'
+    FEATHERWEIGHT= 'featherweight'
+    LIGHTWEIGHT= 'lightweight'
+    WELTERWEIGHT= 'welterweight'
+    MIDDLEWEIGHT= 'middleweight'
+    LIGHT_HEAVYWEIGHT= 'light heavyweight'
+    HEAVYWEIGHT= 'heavyweight'
+    WOMEN_STRAWWEIGHT= "women's starwweight"
+    WOMEN_FLYWEIGHT= "women's flyweight"
+    WOMEN_BANTAMWEIGHT= "women's bantamweight"
+    WOMEN_FEATHERWEIGHT= "women's featherweight"
 
 class LastFightOutcomeEnum(Enum):
     WIN = 'win'
@@ -37,9 +35,9 @@ class Last5Record(BaseModel):
 
 class Fighter(BaseModel):
     name: str
+    weight_class: WeightClassEnum
     rank: Optional[conint(ge=0, le=15)] = None
     champion: bool
-    fighting_style: FighterStyleEnum # fighter.fighting_style.name for clean text
     win_streak: conint(ge=0)
     last_fight_outcome: LastFightOutcomeEnum
     last_5_fight_record: Last5Record = Last5Record(wins=0, loss=0, other=0)
@@ -59,27 +57,43 @@ class Fighter(BaseModel):
             raise ValueError("Recent record must be 5 fights or less!")
         return value
 
+    # return data as a dictionary
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "weight_class": self.weight_class.value,
+            "rank": str(self.rank) if self.rank is not None else None,
+            "champion": str(self.champion).lower(),
+            "win_streak": str(self.win_streak),
+            "last_fight_outcome": self.last_fight_outcome.value,
+            "last_5_fight_record": {
+                "wins": str(self.last_5_fight_record.wins),
+                "loss": str(self.last_5_fight_record.loss),
+                "other": str(self.last_5_fight_record.other)
+            },
+            "last_5_opponents": self.last_5_opponents
+        },
+
+
 # test fighter instance
-fighter_data = '''{
-    "name": "shayne lussier",
-    "rank": "8",
-    "champion": "false",
-    "fighting_style": "mma",
-    "win_streak": "2",
-    "last_fight_outcome": "win",
-    "last_5_fight_record": {
-        "wins": "2",
-        "loss": "0",
-        "other": "0"
+test = Fighter(
+    name="shayne lussier",
+    weight_class="featherweight",
+    rank=8,
+    champion=False,
+    win_streak=2,
+    last_fight_outcome="win",
+    last_5_fight_record={
+        "wins": 2,
+        "loss": 0,
+        "other": 0
     },
-    "last_5_opponents": [
+    last_5_opponents=[
         "john cena",
         "the rock"
     ]
-}'''
+)
 
-# Convert JSON string to Python dictionary
-data = json.loads(fighter_data)
-    
-fighter = Fighter(**data)
-print(fighter)
+test_dict = test.to_dict()
+
+save_data(test_dict)
