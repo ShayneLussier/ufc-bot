@@ -8,7 +8,7 @@ from ufc_functions import (
     save_data,
     collect_names,
     collect_rank,
-    collect_champion_status,
+    collect_is_champion,
 )
 
 
@@ -63,9 +63,9 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
         WeightClassCode=weight_class_code,
     )
 
-# visit fighter page for stats
+# visit fighter page
 for weight_class_name, names in athlete_names.items():
-    # initialize lists for functions arguments
+    # initialize lists for functions
     athlete_rankings = []
     athlete_champion = []
 
@@ -76,10 +76,14 @@ for weight_class_name, names in athlete_names.items():
         athlete_rankings = collect_rank(Driver=driver, RankingsList=athlete_rankings)
 
     # collect championship status
-    collect_champion_status(
+    athlete_champion = collect_is_champion(
         RankingList=athlete_rankings, ChampionStatusList=athlete_champion
     )
-
+    #
+    #
+    #
+    #
+    #
     # retrive remaining data from espn
     driver.get(f"https://www.espn.com/search/_/q/{name}")
     # time.sleep() ?

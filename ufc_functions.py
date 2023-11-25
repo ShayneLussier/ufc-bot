@@ -8,7 +8,7 @@ def save_data(fighterDict):
     # Load existing data from the file, if any
     existing_data = []
     try:
-        with open("fighter_data.json", "r") as f:
+        with open("fighter_data.json", "r", encoding="utf-8") as f:
             existing_data = json.load(f)
     except FileNotFoundError:
         pass
@@ -17,8 +17,8 @@ def save_data(fighterDict):
     existing_data.extend(fighterDict)
 
     # Write the updated data back to the file
-    with open("fighter_data.json", "w") as file:
-        json.dump(existing_data, file, indent=4)
+    with open("fighter_data.json", "w", encoding="utf-8") as file:
+        json.dump(existing_data, file, indent=4, ensure_ascii=False)
 
 
 def collect_names(Driver, WeightClassName, WeightClassCode):
@@ -48,13 +48,6 @@ def collect_names(Driver, WeightClassName, WeightClassCode):
     extra_athletes = athlete_count - 11
     load_more_athletes = math.ceil(extra_athletes / 11)
 
-    #  checks how many extra pages of athletes
-    athlete_count_rest = int(
-        Driver.find_element(By.CLASS_NAME, "althelete-total").text.split()[0]
-    )
-    extra_athletes = athlete_count_rest - 11
-    load_more_athletes = math.ceil(extra_athletes / 11)
-
     web_names = Driver.find_elements(
         By.CSS_SELECTOR, ".c-listing-athlete__text .c-listing-athlete__name"
     )
@@ -69,40 +62,48 @@ def collect_names(Driver, WeightClassName, WeightClassCode):
             )
 
             # find remaining names
-            reamining_names = Driver.find_elements(
+            remaining_names = Driver.find_elements(
                 By.CSS_SELECTOR, ".c-listing-athlete__text .c-listing-athlete__name"
             )
-            for name in reamining_names:
+            for name in remaining_names:
                 athlete_names[WeightClassName].append(
-                    name.text.lower().replace(" ", "-")
+                    name.text.lower().replace(" ", "-").replace("'", "")
                 )
     return athlete_names, athlete_count
 
 
 def collect_rank(Driver, RankingsList):
+    title_holder_found = False  # Flag to check if "Title Holder" is found
+
     try:
-        ranking = Driver.find_element(By.CLASS_NAME, "hero-profile__tag").text.split()[
-            0
-        ]  # rank number
-        if "#" not in ranking:
-            ranking = Driver.find_elements(
-                By.CLASS_NAME, "hero-profile__tag"
-            )  # title holder
-        if "Title Holder" in ranking[3].text:
-            ranking = 0
-    except:
-        ranking = None
-    finally:
-        RankingsList.append(ranking)
+        rankings = Driver.find_elements(By.CLASS_NAME, "hero-profile__tag")
+
+        for rank in rankings:
+            if "Title Holder" in rank.text:
+                RankingsList.append(0)
+                title_holder_found = True
+                break
+
+        if not title_holder_found:  # If "Title Holder" wasn't found, check for #
+            for rank in rankings:
+                if "#" in rank.text:
+                    ranking = int(rank.text.split()[0][1:])
+                    RankingsList.append(ranking)
+                    break
+            else:  # If neither "Title Holder" nor "#" was found
+                RankingsList.append(None)
+
+    except IndexError:
+        RankingsList.append(None)
+
     return RankingsList
 
 
-def collect_champion_status(RankingList, ChampionStatusList):
+def collect_is_champion(RankingList, ChampionStatusList):
     for ranking in RankingList:
         if ranking == 0:
             champion_status = True
-            ChampionStatusList.append(champion_status)
         else:
             champion_status = False
-            ChampionStatusList.append(champion_status)
+        ChampionStatusList.append(champion_status)
     return ChampionStatusList
