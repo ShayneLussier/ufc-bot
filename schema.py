@@ -1,31 +1,31 @@
-from numpy import save
 from pydantic import BaseModel, conint, field_validator
 from enum import Enum
 from typing import Optional
-import json
-from ufc_functions import save_data
 
 
 # ------------------------- SCHEMA -------------------------- #
 
+
 class WeightClassEnum(Enum):
-    FLYWEIGHT= 'flyweight'
-    BANTAMWEIGHT= 'bantamweight'
-    FEATHERWEIGHT= 'featherweight'
-    LIGHTWEIGHT= 'lightweight'
-    WELTERWEIGHT= 'welterweight'
-    MIDDLEWEIGHT= 'middleweight'
-    LIGHT_HEAVYWEIGHT= 'light heavyweight'
-    HEAVYWEIGHT= 'heavyweight'
-    WOMEN_STRAWWEIGHT= "women's starwweight"
-    WOMEN_FLYWEIGHT= "women's flyweight"
-    WOMEN_BANTAMWEIGHT= "women's bantamweight"
-    WOMEN_FEATHERWEIGHT= "women's featherweight"
+    FLYWEIGHT = "flyweight"
+    BANTAMWEIGHT = "bantamweight"
+    FEATHERWEIGHT = "featherweight"
+    LIGHTWEIGHT = "lightweight"
+    WELTERWEIGHT = "welterweight"
+    MIDDLEWEIGHT = "middleweight"
+    LIGHT_HEAVYWEIGHT = "light heavyweight"
+    HEAVYWEIGHT = "heavyweight"
+    WOMEN_STRAWWEIGHT = "women's starwweight"
+    WOMEN_FLYWEIGHT = "women's flyweight"
+    WOMEN_BANTAMWEIGHT = "women's bantamweight"
+    WOMEN_FEATHERWEIGHT = "women's featherweight"
+
 
 class LastFightOutcomeEnum(Enum):
-    WIN = 'win'
-    LOSS = 'loss'
-    OTHER = 'other'
+    WIN = "win"
+    LOSS = "loss"
+    OTHER = "other"
+
 
 class Last5Record(BaseModel):
     wins: conint(ge=0, le=5)
@@ -43,14 +43,14 @@ class Fighter(BaseModel):
     last_5_fight_record: Last5Record = Last5Record(wins=0, loss=0, other=0)
     last_5_opponents: list[str] = []
     # stats: None # nested list of stats
-    
-    @field_validator('last_5_opponents')
+
+    @field_validator("last_5_opponents")
     def opponents_length(cls, value):
         if len(value) > 5:
             raise ValueError("List must be 5 or less!")
         return value
 
-    @field_validator('last_5_fight_record')
+    @field_validator("last_5_fight_record")
     def record_sum(cls, value):
         total = value.wins + value.loss + value.other
         if total > 5:
@@ -59,20 +59,22 @@ class Fighter(BaseModel):
 
     # return data as a dictionary
     def to_dict(self):
-        return {
-            "name": self.name,
-            "weight_class": self.weight_class.value,
-            "rank": str(self.rank) if self.rank is not None else None,
-            "champion": str(self.champion).lower(),
-            "win_streak": str(self.win_streak),
-            "last_fight_outcome": self.last_fight_outcome.value,
-            "last_5_fight_record": {
-                "wins": str(self.last_5_fight_record.wins),
-                "loss": str(self.last_5_fight_record.loss),
-                "other": str(self.last_5_fight_record.other)
+        return (
+            {
+                "name": self.name,
+                "weight_class": self.weight_class.value,
+                "rank": str(self.rank) if self.rank is not None else None,
+                "champion": str(self.champion).lower(),
+                "win_streak": str(self.win_streak),
+                "last_fight_outcome": self.last_fight_outcome.value,
+                "last_5_fight_record": {
+                    "wins": str(self.last_5_fight_record.wins),
+                    "loss": str(self.last_5_fight_record.loss),
+                    "other": str(self.last_5_fight_record.other),
+                },
+                "last_5_opponents": self.last_5_opponents,
             },
-            "last_5_opponents": self.last_5_opponents
-        },
+        )
 
 
 # test fighter instance
@@ -83,17 +85,10 @@ test = Fighter(
     champion=False,
     win_streak=2,
     last_fight_outcome="win",
-    last_5_fight_record={
-        "wins": 2,
-        "loss": 0,
-        "other": 0
-    },
-    last_5_opponents=[
-        "john cena",
-        "the rock"
-    ]
+    last_5_fight_record={"wins": 2, "loss": 0, "other": 0},
+    last_5_opponents=["john cena", "the rock"],
 )
 
-test_dict = test.to_dict()
+# test_dict = test.to_dict()
 
-save_data(test_dict)
+# save_data(test_dict)
