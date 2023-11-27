@@ -1,34 +1,18 @@
-# ------------------------- PACKAGES -------------------------- #
+# ------------------------- IMPORTS -------------------------- #
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-# import math
 import time
 from schema import Fighter
 from ufc_functions import (
+    collect_last_5_record,
+    collect_win_streak,
     save_data,
     collect_names,
     collect_rank,
     collect_is_champion,
+    collect_last_opponents,
+    collect_last_fight_outcome
 )
-
-
-# ------------------------- SELENIUM SETUP -------------------------- #
-# proxy if needed to load website via another country
-# proxy = {
-#     "http": "32.223.6.94:80",
-#     "https": "37.19.220.131:8443",
-# }
-
-# keep browser open
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_experimental_option("detach", True)
-
-# Merge Chrome options and proxy options
-# chrome_options.add_argument(f'--proxy-server={proxy["http"]}')
-# chrome_options.add_argument(f'--proxy-server={proxy["https"]}')
-
-driver = webdriver.Chrome(options=chrome_options)
-
 
 # ------------------------- CONSTANTS -------------------------- #
 WEIGHT_CLASSES = {
@@ -46,20 +30,22 @@ WEIGHT_CLASSES = {
     "women's featherweight": "3A39",
 }
 
+# ------------------------- SELENIUM SETUP -------------------------- #
+# keep browser open
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_experimental_option("detach", True)
 
-# ------------------------- DATA STRUCTURES -------------------------- #
+driver = webdriver.Chrome(options=chrome_options)
+
+# ------------------------- DATA COLLECTION -------------------------- #
 # initialize data structures for functions
 athlete_rankings = []
 athlete_champion = []
 athlete_last_opponents = {}
-
-athlete_weight_class = []
+athlete_last_5_record = {}
 athlete_win_streak = []
 athlete_last_fight_outcome = []
-athlete_last_5_record = {"wins": 0, "loss": 0, "other": 0}
 
-
-# ------------------------- TESTING -------------------------- #
 # collect names
 for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
     athlete_names, athlete_count = collect_names(
@@ -70,8 +56,6 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
 
 # visit fighter page
 for weight_class_name, names in athlete_names.items():
-    print(weight_class_name)
-    print(names)
     # collect data from ufc.com
     for name in names:
         driver.get(f"https://www.ufc.com/athlete/{name}")
@@ -93,59 +77,24 @@ for weight_class_name, names in athlete_names.items():
             By.CSS_SELECTOR, ".AnchorLink.LogoTile.flex.items-center.pl3.pr3"
         )
         link.click()
+        time.sleep(1)
+        fight_record_link = driver.find_element(By.CLASS_NAME, "Card__Header__SubLink__Text")
+        fight_record_link.click()
+
 
         # collect last 5 opponents
-        web_opponent = driver.find_elements(By.CSS_SELECTOR, ".tl.Table__TD .AnchorLink")
-        opponent_list = []
-        for opponent in web_opponent[:10:2]:
-            opponent = opponent.get_attribute("href").split("/")[-1]
-            opponent_list.append(opponent)
-        athlete_last_opponents[name] = opponent_list
+        athlete_last_opponents = collect_last_opponents(Driver=driver, FighterName=name, LastOpponentsDict=athlete_last_opponents)
 
-    # # collect last 5 fight record
-    # last_5_record = []
-    # web_last_5_result = driver.find_elements(By.CSS_SELECTOR, ".Table__TD .ResultCell")
-    # for record in web_last_5_result[:5]:
-    #     last_5_record.append(record.text.lower())
+        # collect last 5 fight record
+        athlete_last_5_record, fight_results = collect_last_5_record(Driver=driver, FighterName=name, LastFightsDict=athlete_last_5_record)
 
-    # for result in last_5_record:
-    #     if result == "w":
-    #         athlete_last_5_record["wins"] += 1
-    #     elif result == "l":
-    #         athlete_last_5_record["loss"] += 1
-    #     elif result == "d":
-    #         athlete_last_5_record["other"] += 1
+        # collect win streak
+        athlete_win_streak = collect_win_streak(FightResults=fight_results, WinStreakList=athlete_win_streak)
 
-    # # collect win streak
-    # win_streak = 0
-    # for result in last_5_record:
-    #     if result == "w":
-    #         win_streak += 1
-    #     else:
-    #         break
-    # athlete_win_streak.append(win_streak)
+        # collect last fight outcome
+        athlete_last_fight_outcome = collect_last_fight_outcome(FightResults=fight_results, FightOutcomeList=athlete_last_fight_outcome)
 
-    # # collect last fight outcome
-    # last_fight_outcome = last_5_record[0]
-
-    # create a fighter class for each fighter
-    # fighter.to_dict method
-    # convert dict to json
-    # load json into a file
-    # upload file to database
-
-    # driver.quit()
-
-    print(athlete_names)
-    print(athlete_weight_class)
-    print(athlete_rankings)
-    print(athlete_champion)
-    print(athlete_win_streak)
-    print(athlete_last_fight_outcome)
-    print(athlete_last_5_record)
-    print(athlete_last_opponents)
-
-
+    # save data to json file only if all athletes have been captured
     if len(athlete_names[weight_class_name]) == athlete_count:
         for i in range(athlete_count):
             fighter_dict = Fighter(
@@ -153,9 +102,9 @@ for weight_class_name, names in athlete_names.items():
                 weight_class=weight_class_name,
                 rank=athlete_rankings[i],
                 champion=athlete_champion[i],
-                win_streak=2,
-                last_fight_outcome="win",
-                last_5_fight_record={"wins": 2, "loss": 0, "other": 0},
+                win_streak=athlete_win_streak[i],
+                last_fight_outcome=athlete_last_fight_outcome[i],
+                last_5_fight_record=athlete_last_5_record[names[i]],
                 last_5_opponents=athlete_last_opponents[names[i]],
             ).to_dict()
             save_data(fighter_dict)
