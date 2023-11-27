@@ -25,6 +25,7 @@ class LastFightOutcomeEnum(Enum):
     WIN = "win"
     LOSS = "loss"
     OTHER = "other"
+    NOT_FOUND = "not found"
 
 
 class Last5Record(BaseModel):
@@ -75,20 +76,3 @@ class Fighter(BaseModel):
                 "last_5_opponents": self.last_5_opponents,
             },
         )
-
-
-# test fighter instance
-test = Fighter(
-    name="shayne lussier",
-    weight_class="featherweight",
-    rank=8,
-    champion=False,
-    win_streak=2,
-    last_fight_outcome="win",
-    last_5_fight_record={"wins": 2, "loss": 0, "other": 0},
-    last_5_opponents=["john cena", "the rock"],
-)
-
-# test_dict = test.to_dict()
-
-# save_data(test_dict)

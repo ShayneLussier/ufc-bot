@@ -2,13 +2,15 @@ import json
 from selenium.webdriver.common.by import By
 import math
 import copy
+import time
+import unidecode
 
 
 def save_data(fighterDict):
     # Load existing data from the file, if any
     existing_data = []
     try:
-        with open("fighter_data.json", "r", encoding="utf-8") as f:
+        with open("fighter_data.json", "r") as f:
             existing_data = json.load(f)
     except FileNotFoundError:
         pass
@@ -17,8 +19,8 @@ def save_data(fighterDict):
     existing_data.extend(fighterDict)
 
     # Write the updated data back to the file
-    with open("fighter_data.json", "w", encoding="utf-8") as file:
-        json.dump(existing_data, file, indent=4, ensure_ascii=False)
+    with open("fighter_data.json", "w") as file:
+        json.dump(existing_data, file, indent=4)
 
 
 def collect_names(Driver, WeightClassName, WeightClassCode):
@@ -40,6 +42,7 @@ def collect_names(Driver, WeightClassName, WeightClassCode):
     Driver.get(
         f"https://www.ufc.com/athletes/all?filters%5B0%5D=status%3A23&filters%5B1%5D=weight_class%{WeightClassCode}"
     )
+    time.sleep(2)
 
     #  checks how many extra pages of athletes
     athlete_count = int(
@@ -52,7 +55,11 @@ def collect_names(Driver, WeightClassName, WeightClassCode):
         By.CSS_SELECTOR, ".c-listing-athlete__text .c-listing-athlete__name"
     )
     for name in web_names:
-        athlete_names[WeightClassName].append(name.text.lower().replace(" ", "-"))
+        athlete_names[WeightClassName].append(
+            unidecode(
+                name.text.lower().replace(" ", "-").replace("'", "").replace(".", "")
+            )
+        )
 
     # visits remaining pages if nedded
     if load_more_athletes > 0:
@@ -60,6 +67,7 @@ def collect_names(Driver, WeightClassName, WeightClassCode):
             Driver.get(
                 f"https://www.ufc.com/athletes/all?filters%5B0%5D=status%3A23&filters%5B1%5D=weight_class%{WeightClassCode}&page={n+1}"
             )
+            time.sleep(2)
 
             # find remaining names
             remaining_names = Driver.find_elements(
@@ -67,7 +75,12 @@ def collect_names(Driver, WeightClassName, WeightClassCode):
             )
             for name in remaining_names:
                 athlete_names[WeightClassName].append(
-                    name.text.lower().replace(" ", "-").replace("'", "")
+                    unidecode(
+                        name.text.lower()
+                        .replace(" ", "-")
+                        .replace("'", "")
+                        .replace(".", "")
+                    )
                 )
     return athlete_names, athlete_count
 
@@ -138,7 +151,7 @@ def collect_last_5_record(Driver, FighterName, LastFightsDict):
             last_5_record_dict["other"] += 1
     LastFightsDict[FighterName] = copy.deepcopy(last_5_record_dict)
     return LastFightsDict, fight_results
-    
+
 
 def collect_win_streak(FightResults, WinStreakList):
     win_streak = 0
@@ -152,11 +165,14 @@ def collect_win_streak(FightResults, WinStreakList):
 
 
 def collect_last_fight_outcome(FightResults, FightOutcomeList):
-    last_fight_outcome = FightResults[0]
-    if last_fight_outcome == "w":
-        FightOutcomeList.append("win")
-    elif last_fight_outcome == "l":
-        FightOutcomeList.append("loss")
+    if FightResults == []:
+        FightOutcomeList.append("not found")
     else:
-        FightOutcomeList.append("other")
+        last_fight_outcome = FightResults[0]
+        if last_fight_outcome == "w":
+            FightOutcomeList.append("win")
+        elif last_fight_outcome == "l":
+            FightOutcomeList.append("loss")
+        else:
+            FightOutcomeList.append("other")
     return FightOutcomeList
