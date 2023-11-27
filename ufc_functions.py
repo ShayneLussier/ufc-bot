@@ -1,9 +1,9 @@
 import json
 from selenium.webdriver.common.by import By
-import math
-import copy
-import time
-import unidecode
+from math import ceil
+from copy import deepcopy
+from time import sleep
+from unidecode import unidecode
 
 
 def save_data(fighterDict):
@@ -42,14 +42,14 @@ def collect_names(Driver, WeightClassName, WeightClassCode):
     Driver.get(
         f"https://www.ufc.com/athletes/all?filters%5B0%5D=status%3A23&filters%5B1%5D=weight_class%{WeightClassCode}"
     )
-    time.sleep(2)
+    sleep(2)
 
     #  checks how many extra pages of athletes
     athlete_count = int(
         Driver.find_element(By.CLASS_NAME, "althelete-total").text.split()[0]
     )
     extra_athletes = athlete_count - 11
-    load_more_athletes = math.ceil(extra_athletes / 11)
+    load_more_athletes = ceil(extra_athletes / 11)
 
     web_names = Driver.find_elements(
         By.CSS_SELECTOR, ".c-listing-athlete__text .c-listing-athlete__name"
@@ -67,7 +67,7 @@ def collect_names(Driver, WeightClassName, WeightClassCode):
             Driver.get(
                 f"https://www.ufc.com/athletes/all?filters%5B0%5D=status%3A23&filters%5B1%5D=weight_class%{WeightClassCode}&page={n+1}"
             )
-            time.sleep(2)
+            sleep(2)
 
             # find remaining names
             remaining_names = Driver.find_elements(
@@ -149,7 +149,7 @@ def collect_last_5_record(Driver, FighterName, LastFightsDict):
             last_5_record_dict["loss"] += 1
         elif result == "d":
             last_5_record_dict["other"] += 1
-    LastFightsDict[FighterName] = copy.deepcopy(last_5_record_dict)
+    LastFightsDict[FighterName] = deepcopy(last_5_record_dict)
     return LastFightsDict, fight_results
 
 
