@@ -1,6 +1,5 @@
 from pydantic import BaseModel, conint, field_validator
 from enum import Enum
-from typing import Optional
 
 
 # ------------------------- SCHEMA -------------------------- #
@@ -35,15 +34,16 @@ class Last5Record(BaseModel):
 
 
 class Fighter(BaseModel):
+    id: str | None
     name: str
+    country: str | None
     weight_class: WeightClassEnum
-    rank: Optional[conint(ge=0, le=15)] = None
+    rank: conint(ge=0, le=15) | None
     champion: bool
     win_streak: conint(ge=0)
     last_fight_outcome: LastFightOutcomeEnum
     last_5_fight_record: Last5Record = Last5Record(wins=0, loss=0, other=0)
     last_5_opponents: list[str] = []
-    # stats: None # nested list of stats
 
     @field_validator("last_5_opponents")
     def opponents_length(cls, value):
@@ -62,6 +62,7 @@ class Fighter(BaseModel):
     def to_dict(self):
         return (
             {
+                "_id": self.id,
                 "name": self.name,
                 "weight_class": self.weight_class.value,
                 "rank": str(self.rank) if self.rank is not None else None,
@@ -74,5 +75,6 @@ class Fighter(BaseModel):
                     "other": str(self.last_5_fight_record.other),
                 },
                 "last_5_opponents": self.last_5_opponents,
+                "country": self.country,
             },
         )

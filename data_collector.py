@@ -16,9 +16,9 @@ from ufc_functions import (
 
 # ------------------------- CONSTANTS -------------------------- #
 WEIGHT_CLASSES = {
-    # "flyweight": "3A10",
-    # "bantamweight": "3A8",
-    # "featherweight": "3A9",
+    "flyweight": "3A10",
+    "bantamweight": "3A8",
+    "featherweight": "3A9",
     "lightweight": "3A12",
     "welterweight": "3A15",
     "middleweight": "3A14",
@@ -40,6 +40,8 @@ driver = webdriver.Chrome(options=chrome_options)
 # ------------------------- DATA COLLECTION -------------------------- #
 for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
     # initialize data structures for functions
+    athlete_espn_id = []
+    athlete_country = []
     athlete_rankings = []
     athlete_champion = []
     athlete_last_opponents = {}
@@ -91,6 +93,8 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
                 athlete_last_5_record[name] = {"wins": 0, "loss": 0, "other": 0}
                 athlete_win_streak.append(0)
                 athlete_last_fight_outcome.append("not found")
+                athlete_country.append(None)
+                athlete_espn_id.append(None)
                 continue
 
             sleep(2)
@@ -99,6 +103,7 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
             )
             if fight_record_link:  # if fighter page returns data, collect it
                 fight_record_link.click()
+                sleep(2)
 
                 # collect last 5 opponents
                 athlete_last_opponents = collect_last_opponents(
@@ -124,6 +129,16 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
                     FightResults=fight_results,
                     FightOutcomeList=athlete_last_fight_outcome,
                 )
+
+                # collect country
+                country = driver.find_element(By.CSS_SELECTOR, ".Image.Logo.Logo__sm")
+                athlete_country.append(country.get_attribute("title"))
+
+                # collect espn_id
+                espn_url = driver.current_url.split("/")
+                athlete_espn_id.append(espn_url[-2])
+                
+
             else:  # if fighter page returns error, commit default data
                 athlete_rankings.append(None)
                 athlete_champion.append(False)
@@ -131,19 +146,24 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
                 athlete_last_5_record[name] = {"wins": 0, "loss": 0, "other": 0}
                 athlete_win_streak.append(0)
                 athlete_last_fight_outcome.append("not found")
+                athlete_country.append(None)
+                athlete_espn_id.append(None)
 
         # save data to json file
-        for i in range(athlete_count):
-            fighter_dict = Fighter(
-                name=athlete_names[weight_class_name][i],
-                weight_class=weight_class_name,
-                rank=athlete_rankings[i],
-                champion=athlete_champion[i],
-                win_streak=athlete_win_streak[i],
-                last_fight_outcome=athlete_last_fight_outcome[i],
-                last_5_fight_record=athlete_last_5_record[names[i]],
-                last_5_opponents=athlete_last_opponents[names[i]],
-            ).to_dict()
-            save_data(fighter_dict)
+        if len(athlete_names[weight_class_name]) == athlete_count:
+            for i in range(athlete_count):
+                fighter_dict = Fighter(
+                    id=athlete_espn_id[i],
+                    name=athlete_names[weight_class_name][i],
+                    country=athlete_country[i],
+                    weight_class=weight_class_name,
+                    rank=athlete_rankings[i],
+                    champion=athlete_champion[i],
+                    win_streak=athlete_win_streak[i],
+                    last_fight_outcome=athlete_last_fight_outcome[i],
+                    last_5_fight_record=athlete_last_5_record[names[i]],
+                    last_5_opponents=athlete_last_opponents[names[i]],
+                ).to_dict()
+                save_data(fighter_dict)
 
 # driver.quit()
