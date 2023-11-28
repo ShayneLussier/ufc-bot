@@ -23,22 +23,7 @@ def save_data(fighterDict):
         json.dump(existing_data, file, indent=4)
 
 
-def collect_names(Driver, WeightClassName, WeightClassCode):
-    athlete_names = {
-        "flyweight": [],
-        "bantamweight": [],
-        "featherweight": [],
-        "lightweight": [],
-        "welterweight": [],
-        "middleweight": [],
-        "light heavyweight": [],
-        "heavyweight": [],
-        "women's strawweight": [],
-        "women's flyweight": [],
-        "women's bantamweight": [],
-        "women's featherweight": [],
-    }
-
+def collect_names(Driver, WeightClassName, WeightClassCode, NamesDict):
     Driver.get(
         f"https://www.ufc.com/athletes/all?filters%5B0%5D=status%3A23&filters%5B1%5D=weight_class%{WeightClassCode}"
     )
@@ -55,7 +40,7 @@ def collect_names(Driver, WeightClassName, WeightClassCode):
         By.CSS_SELECTOR, ".c-listing-athlete__text .c-listing-athlete__name"
     )
     for name in web_names:
-        athlete_names[WeightClassName].append(
+        NamesDict[WeightClassName].append(
             unidecode(
                 name.text.lower().replace(" ", "-").replace("'", "").replace(".", "")
             )
@@ -74,7 +59,7 @@ def collect_names(Driver, WeightClassName, WeightClassCode):
                 By.CSS_SELECTOR, ".c-listing-athlete__text .c-listing-athlete__name"
             )
             for name in remaining_names:
-                athlete_names[WeightClassName].append(
+                NamesDict[WeightClassName].append(
                     unidecode(
                         name.text.lower()
                         .replace(" ", "-")
@@ -82,7 +67,7 @@ def collect_names(Driver, WeightClassName, WeightClassCode):
                         .replace(".", "")
                     )
                 )
-    return athlete_names, athlete_count
+    return NamesDict, athlete_count
 
 
 def collect_rank(Driver, RankingsList):
@@ -113,12 +98,10 @@ def collect_rank(Driver, RankingsList):
 
 
 def collect_is_champion(RankingList, ChampionStatusList):
-    for ranking in RankingList:
-        if ranking == 0:
-            champion_status = True
-        else:
-            champion_status = False
-        ChampionStatusList.append(champion_status)
+    if RankingList[-1] == 0:
+        ChampionStatusList.append(True)
+    else:
+        ChampionStatusList.append(False)
     return ChampionStatusList
 
 
@@ -176,3 +159,15 @@ def collect_last_fight_outcome(FightResults, FightOutcomeList):
         else:
             FightOutcomeList.append("other")
     return FightOutcomeList
+
+
+def collect_country(Driver, CountryList):
+    country = Driver.find_element(By.CSS_SELECTOR, ".Image.Logo.Logo__sm")
+    CountryList.append(country.get_attribute("title"))
+    return CountryList
+
+
+def collect_espn_id(Driver, IdList):
+    espn_url = Driver.current_url.split("/")
+    IdList.append(espn_url[-2])
+    return IdList

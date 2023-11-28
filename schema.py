@@ -64,6 +64,7 @@ class Fighter(BaseModel):
             {
                 "_id": self.id,
                 "name": self.name,
+                "country": self.country,
                 "weight_class": self.weight_class.value,
                 "rank": str(self.rank) if self.rank is not None else None,
                 "champion": str(self.champion).lower(),
@@ -75,6 +76,5 @@ class Fighter(BaseModel):
                     "other": str(self.last_5_fight_record.other),
                 },
                 "last_5_opponents": self.last_5_opponents,
-                "country": self.country,
             },
         )
