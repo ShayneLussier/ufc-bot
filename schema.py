@@ -14,7 +14,7 @@ class WeightClassEnum(Enum):
     MIDDLEWEIGHT = "middleweight"
     LIGHT_HEAVYWEIGHT = "light heavyweight"
     HEAVYWEIGHT = "heavyweight"
-    WOMEN_STRAWWEIGHT = "women's starwweight"
+    WOMEN_STRAWWEIGHT = "women's strawweight"
     WOMEN_FLYWEIGHT = "women's flyweight"
     WOMEN_BANTAMWEIGHT = "women's bantamweight"
     WOMEN_FEATHERWEIGHT = "women's featherweight"

@@ -130,7 +130,6 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
             athlete_win_streak.append(0)
             athlete_last_fight_outcome.append("not found")
             athlete_country.append(None)
-            athlete_espn_id.append(None)
             continue
 
         fight_record_link = driver.find_element(
@@ -182,7 +181,6 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
             athlete_win_streak.append(0)
             athlete_last_fight_outcome.append("not found")
             athlete_country.append(None)
-            athlete_espn_id.append(None)
 
     # save data to json file
     index = 0
