@@ -34,7 +34,7 @@ class Last5Record(BaseModel):
 
 
 class Fighter(BaseModel):
-    id: str | None
+    id: str
     name: str
     country: str | None
     weight_class: WeightClassEnum

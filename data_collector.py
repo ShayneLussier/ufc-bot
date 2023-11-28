@@ -2,6 +2,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
+from uuid import uuid4
 from schema import Fighter
 from ufc_functions import (
     collect_last_5_record,
@@ -130,6 +131,7 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
             athlete_win_streak.append(0)
             athlete_last_fight_outcome.append("not found")
             athlete_country.append(None)
+            athlete_espn_id.append(str(uuid4())) # append random uuid to missing fighter, if mutliple fighters have null "_id", mongodb will return error
             continue
 
         fight_record_link = driver.find_element(
@@ -181,6 +183,7 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
             athlete_win_streak.append(0)
             athlete_last_fight_outcome.append("not found")
             athlete_country.append(None)
+            athlete_espn_id.append(str(uuid4()))
 
     # save data to json file
     index = 0
