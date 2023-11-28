@@ -27,7 +27,7 @@ def collect_names(Driver, WeightClassName, WeightClassCode, NamesDict):
     Driver.get(
         f"https://www.ufc.com/athletes/all?filters%5B0%5D=status%3A23&filters%5B1%5D=weight_class%{WeightClassCode}"
     )
-    sleep(2)
+    sleep(5)
 
     #  checks how many extra pages of athletes
     athlete_count = int(
