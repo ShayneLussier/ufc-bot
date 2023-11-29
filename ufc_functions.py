@@ -118,33 +118,30 @@ def collect_last_opponents(Driver, FighterName, LastOpponentsDict):
     return LastOpponentsDict
 
 
-def collect_last_5_record(Driver, FighterName, LastFightsDict):
+def collect_record(Driver, FighterName, RecordDict):
+    record = Driver.find_element(By.CLASS_NAME, "hero-profile__division-body")
+    wins = record.text.split("-")[0]
+    losses = record.text.split("-")[1]
+    fighter_record = {"win": wins, "loss": losses}
+    print(fighter_record)
+    RecordDict[FighterName] = fighter_record
+    return RecordDict
+
+
+def collect_win_streak(Driver, WinStreakList):
     fight_results = []
     web_last_5_result = Driver.find_elements(By.CSS_SELECTOR, ".Table__TD .ResultCell")
     for record in web_last_5_result:
         fight_results.append(record.text.lower())
 
-    last_5_record_dict = {"wins": 0, "loss": 0, "other": 0}
-    for result in fight_results[:5]:
-        if result == "w":
-            last_5_record_dict["wins"] += 1
-        elif result == "l":
-            last_5_record_dict["loss"] += 1
-        elif result == "d":
-            last_5_record_dict["other"] += 1
-    LastFightsDict[FighterName] = deepcopy(last_5_record_dict)
-    return LastFightsDict, fight_results
-
-
-def collect_win_streak(FightResults, WinStreakList):
     win_streak = 0
-    for result in FightResults:
+    for result in fight_results:
         if result == "w":
             win_streak += 1
         else:
             break
     WinStreakList.append(win_streak)
-    return WinStreakList
+    return WinStreakList, fight_results
 
 
 def collect_last_fight_outcome(FightResults, FightOutcomeList):

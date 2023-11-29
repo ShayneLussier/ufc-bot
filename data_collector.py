@@ -5,7 +5,7 @@ from time import sleep
 from uuid import uuid4
 from schema import Fighter
 from ufc_functions import (
-    collect_last_5_record,
+    collect_record,
     collect_win_streak,
     save_data,
     collect_names,
@@ -19,17 +19,17 @@ from ufc_functions import (
 
 # ------------------------- CONSTANTS -------------------------- #
 WEIGHT_CLASSES = {
-    "flyweight": "3A10",
-    "bantamweight": "3A8",
-    "featherweight": "3A9",
-    "lightweight": "3A12",
-    "welterweight": "3A15",
-    "middleweight": "3A14",
-    "light heavyweight": "3A13",
-    "heavyweight": "3A11",
-    "women's strawweight": "3A16",
-    "women's flyweight": "3A38",
-    "women's bantamweight": "3A37",
+    # "flyweight": "3A10",
+    # "bantamweight": "3A8",
+    # "featherweight": "3A9",
+    # "lightweight": "3A12",
+    # "welterweight": "3A15",
+    # "middleweight": "3A14",
+    # "light heavyweight": "3A13",
+    # "heavyweight": "3A11",
+    # "women's strawweight": "3A16",
+    # "women's flyweight": "3A38",
+    # "women's bantamweight": "3A37",
     "women's featherweight": "3A39",
 }
 
@@ -64,7 +64,7 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
     athlete_win_streak = []
     athlete_last_fight_outcome = []
     athlete_last_opponents = {}
-    athlete_last_5_record = {}
+    athlete_record = {}
 
     # collect active fighter names for current division
     athlete_names, athlete_count = collect_names(
@@ -86,6 +86,10 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
         athlete_champion = collect_is_champion(
             RankingList=athlete_rankings, ChampionStatusList=athlete_champion
         )
+
+        # collect record
+        athlete_record = collect_record(Driver=driver, FighterName=name, RecordDict=athlete_record)
+        print(athlete_record)
 
     # retrive remaining data from espn.com
     for name in athlete_names[weight_class_name]:
@@ -127,7 +131,7 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
             athlete_rankings.append(None)
             athlete_champion.append(False)
             athlete_last_opponents[name] = []
-            athlete_last_5_record[name] = {"wins": 0, "loss": 0, "other": 0}
+            athlete_record.append({"win": 0, "loss": 0})
             athlete_win_streak.append(0)
             athlete_last_fight_outcome.append("not found")
             athlete_country.append(None)
@@ -149,17 +153,8 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
                 LastOpponentsDict=athlete_last_opponents,
             )
 
-            # collect last 5 fight record
-            athlete_last_5_record, fight_results = collect_last_5_record(
-                Driver=driver,
-                FighterName=name,
-                LastFightsDict=athlete_last_5_record,
-            )
-
             # collect win streak
-            athlete_win_streak = collect_win_streak(
-                FightResults=fight_results, WinStreakList=athlete_win_streak
-            )
+            athlete_win_streak, fight_results = collect_win_streak(Driver=driver, WinStreakList=athlete_win_streak)
 
             # collect last fight outcome
             athlete_last_fight_outcome = collect_last_fight_outcome(
@@ -168,9 +163,7 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
             )
 
             # collect country
-            athlete_country = collect_country(
-                Driver=driver, CountryList=athlete_country
-            )
+            athlete_country = collect_country(Driver=driver, CountryList=athlete_country)
 
             # collect espn_id
             athlete_espn_id = collect_espn_id(Driver=driver, IdList=athlete_espn_id)
@@ -179,7 +172,7 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
             athlete_rankings.append(None)
             athlete_champion.append(False)
             athlete_last_opponents[name] = []
-            athlete_last_5_record[name] = {"wins": 0, "loss": 0, "other": 0}
+            athlete_record.append({"win": 0, "loss": 0})
             athlete_win_streak.append(0)
             athlete_last_fight_outcome.append("not found")
             athlete_country.append(None)
@@ -187,6 +180,7 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
 
     # save data to json file
     index = 0
+    print(athlete_record)
     for name in athlete_names[weight_class_name]:
         fighter_dict = Fighter(
             id=athlete_espn_id[index],
@@ -197,7 +191,7 @@ for weight_class_name, weight_class_code in WEIGHT_CLASSES.items():
             champion=athlete_champion[index],
             win_streak=athlete_win_streak[index],
             last_fight_outcome=athlete_last_fight_outcome[index],
-            last_5_fight_record=athlete_last_5_record[name],
+            fight_record=athlete_record[name],
             last_5_opponents=athlete_last_opponents[name],
         ).to_dict()
         save_data(fighter_dict)

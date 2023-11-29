@@ -27,12 +27,6 @@ class LastFightOutcomeEnum(Enum):
     NOT_FOUND = "not found"
 
 
-class Last5Record(BaseModel):
-    wins: conint(ge=0, le=5)
-    loss: conint(ge=0, le=5)
-    other: conint(ge=0, le=5)
-
-
 class Fighter(BaseModel):
     id: str
     name: str
@@ -42,7 +36,7 @@ class Fighter(BaseModel):
     champion: bool
     win_streak: conint(ge=0)
     last_fight_outcome: LastFightOutcomeEnum
-    last_5_fight_record: Last5Record = Last5Record(wins=0, loss=0, other=0)
+    fight_record: dict
     last_5_opponents: list[str] = []
 
     @field_validator("last_5_opponents")
@@ -50,13 +44,7 @@ class Fighter(BaseModel):
         if len(value) > 5:
             raise ValueError("List must be 5 or less!")
         return value
-
-    @field_validator("last_5_fight_record")
-    def record_sum(cls, value):
-        total = value.wins + value.loss + value.other
-        if total > 5:
-            raise ValueError("Recent record must be 5 fights or less!")
-        return value
+    
 
     # return data as a dictionary
     def to_dict(self):
@@ -70,11 +58,8 @@ class Fighter(BaseModel):
                 "champion": str(self.champion).lower(),
                 "win_streak": str(self.win_streak),
                 "last_fight_outcome": self.last_fight_outcome.value,
-                "last_5_fight_record": {
-                    "wins": str(self.last_5_fight_record.wins),
-                    "loss": str(self.last_5_fight_record.loss),
-                    "other": str(self.last_5_fight_record.other),
-                },
+                "fight_record": self.fight_record,
                 "last_5_opponents": self.last_5_opponents,
             },
         )
+
