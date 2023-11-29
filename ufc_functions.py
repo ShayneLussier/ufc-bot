@@ -1,7 +1,6 @@
 import json
 from selenium.webdriver.common.by import By
 from math import ceil
-from copy import deepcopy
 from time import sleep
 from unidecode import unidecode
 
@@ -119,12 +118,14 @@ def collect_last_opponents(Driver, FighterName, LastOpponentsDict):
 
 
 def collect_record(Driver, FighterName, RecordDict):
-    record = Driver.find_element(By.CLASS_NAME, "hero-profile__division-body")
-    wins = record.text.split("-")[0]
-    losses = record.text.split("-")[1]
-    fighter_record = {"win": wins, "loss": losses}
-    print(fighter_record)
-    RecordDict[FighterName] = fighter_record
+    try:
+        record = Driver.find_element(By.CLASS_NAME, "hero-profile__division-body")
+        wins = record.text.split("-")[0]
+        losses = record.text.split("-")[1]
+        fighter_record = {"win": wins, "loss": losses}
+        RecordDict[FighterName] = fighter_record
+    except:
+        RecordDict[FighterName] = {"win": 0, "loss": 0}
     return RecordDict
 
 
